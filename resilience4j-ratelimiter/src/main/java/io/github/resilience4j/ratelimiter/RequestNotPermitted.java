@@ -34,12 +34,23 @@ public class RequestNotPermitted extends RuntimeException {
      * @param rateLimiter the RateLimiter.
      */
     public static RequestNotPermitted createRequestNotPermitted(RateLimiter rateLimiter) {
+        return createRequestNotPermitted("RateLimiter '%s' does not permit further calls",rateLimiter);
+    }
+
+    /**
+     * Static method to construct a {@link RequestNotPermitted} with a RateLimiter.
+     *
+     * @param format the message
+     * @param rateLimiter the RateLimiter.
+     */
+    public static RequestNotPermitted createRequestNotPermitted(String format,RateLimiter rateLimiter) {
         boolean writableStackTraceEnabled = rateLimiter.getRateLimiterConfig()
             .isWritableStackTraceEnabled();
 
         String message = String
-            .format("RateLimiter '%s' does not permit further calls", rateLimiter.getName());
+            .format(format, rateLimiter.getName());
 
         return new RequestNotPermitted(message, writableStackTraceEnabled);
     }
+
 }

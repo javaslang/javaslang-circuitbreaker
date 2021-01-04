@@ -36,7 +36,7 @@ import io.vavr.collection.HashMap as VavrHashMap
  * @param config methods of [RateLimiterRegistry.Builder] that customize resulting `RateLimiterRegistry`
  */
 inline fun RateLimiterRegistry(
-    config: RateLimiterRegistry.Builder.() -> Unit
+    config: RateLimiterRegistry.Builder<RateLimiterConfig>.() -> Unit
 ): RateLimiterRegistry {
     return RateLimiterRegistry.custom().apply(config).build()
 }
@@ -56,7 +56,7 @@ inline fun RateLimiterRegistry(
  *
  * @param config methods of [RateLimiterConfig.Builder] that customize the default `RateLimiterConfig`
  */
-inline fun RateLimiterRegistry.Builder.withRateLimiterConfig(
+inline fun RateLimiterRegistry.Builder<RateLimiterConfig>.withRateLimiterConfig(
     config: RateLimiterConfig.Builder.() -> Unit
 ) {
     withRateLimiterConfig(RateLimiterConfig(config))
@@ -78,7 +78,7 @@ inline fun RateLimiterRegistry.Builder.withRateLimiterConfig(
  * @param baseConfig base `RateLimiterConfig`
  * @param config methods of [RateLimiterConfig.Builder] that customize the default `RateLimiterConfig`
  */
-inline fun RateLimiterRegistry.Builder.withRateLimiterConfig(
+inline fun RateLimiterRegistry.Builder<RateLimiterConfig>.withRateLimiterConfig(
     baseConfig: RateLimiterConfig,
     config: RateLimiterConfig.Builder.() -> Unit
 ) {
@@ -101,7 +101,7 @@ inline fun RateLimiterRegistry.Builder.withRateLimiterConfig(
  * @param configName configName for a custom shared RateLimiter configuration
  * @param config methods of [RateLimiterConfig.Builder] that customize resulting `RateLimiterConfig`
  */
-inline fun RateLimiterRegistry.Builder.addRateLimiterConfig(
+inline fun RateLimiterRegistry.Builder<RateLimiterConfig>.addRateLimiterConfig(
     configName: String,
     config: RateLimiterConfig.Builder.() -> Unit
 ) {
@@ -125,7 +125,7 @@ inline fun RateLimiterRegistry.Builder.addRateLimiterConfig(
  * @param baseConfig base `RateLimiterConfig`
  * @param config methods of [RateLimiterConfig.Builder] that customize resulting `RateLimiterConfig`
  */
-inline fun RateLimiterRegistry.Builder.addRateLimiterConfig(
+inline fun RateLimiterRegistry.Builder<RateLimiterConfig>.addRateLimiterConfig(
     configName: String,
     baseConfig: RateLimiterConfig,
     config: RateLimiterConfig.Builder.() -> Unit
@@ -140,7 +140,7 @@ inline fun RateLimiterRegistry.Builder.addRateLimiterConfig(
  *
  * @param tags default tags to add to the registry.
  */
-fun RateLimiterRegistry.Builder.withTags(tags: Map<String, String>) {
+fun RateLimiterRegistry.Builder<RateLimiterConfig>.withTags(tags: Map<String, String>) {
     withTags(VavrHashMap.ofAll(tags))
 }
 
@@ -151,6 +151,6 @@ fun RateLimiterRegistry.Builder.withTags(tags: Map<String, String>) {
  *
  * @param tags default tags to add to the registry.
  */
-fun RateLimiterRegistry.Builder.withTags(vararg tags: Pair<String, String>) {
+fun RateLimiterRegistry.Builder<RateLimiterConfig>.withTags(vararg tags: Pair<String, String>) {
     withTags(VavrHashMap.ofEntries(tags.map { VavrTuple2(it.first, it.second) }))
 }

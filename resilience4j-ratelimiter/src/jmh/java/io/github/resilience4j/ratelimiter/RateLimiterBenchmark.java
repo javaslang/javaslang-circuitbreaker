@@ -19,6 +19,7 @@
 package io.github.resilience4j.ratelimiter;
 
 import io.github.resilience4j.ratelimiter.internal.AtomicRateLimiter;
+import io.github.resilience4j.ratelimiter.internal.RefillRateLimiter;
 import io.github.resilience4j.ratelimiter.internal.SemaphoreBasedRateLimiter;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -44,9 +45,11 @@ public class RateLimiterBenchmark {
 
     private RateLimiter semaphoreBasedRateLimiter;
     private AtomicRateLimiter atomicRateLimiter;
+    private RefillRateLimiter refillRateLimiter;
 
     private Supplier<String> semaphoreGuardedSupplier;
     private Supplier<String> atomicGuardedSupplier;
+    private Supplier<String> refillGuardedSupplier;
 
     public static void main(String[] args) throws RunnerException {
         Options options = new OptionsBuilder()
@@ -62,17 +65,28 @@ public class RateLimiterBenchmark {
             .limitRefreshPeriod(Duration.ofNanos(10))
             .timeoutDuration(Duration.ofSeconds(5))
             .build();
+
+        RefillRateLimiterConfig refillRateLimiterConfig = RefillRateLimiterConfig.custom()
+            .limitForPeriod(1)
+            .limitRefreshPeriod(Duration.ofNanos(1))
+            .timeoutDuration(Duration.ofSeconds(5))
+            .build();
+
         semaphoreBasedRateLimiter = new SemaphoreBasedRateLimiter("semaphoreBased",
             rateLimiterConfig);
+
         atomicRateLimiter = new AtomicRateLimiter("atomicBased", rateLimiterConfig);
+        refillRateLimiter = new RefillRateLimiter("refillBased", refillRateLimiterConfig);
 
         Supplier<String> stringSupplier = () -> {
             Blackhole.consumeCPU(1);
             return "Hello Benchmark";
         };
+
         semaphoreGuardedSupplier = RateLimiter
             .decorateSupplier(semaphoreBasedRateLimiter, stringSupplier);
         atomicGuardedSupplier = RateLimiter.decorateSupplier(atomicRateLimiter, stringSupplier);
+        refillGuardedSupplier = RateLimiter.decorateSupplier(refillRateLimiter, stringSupplier);
     }
 
     @Benchmark
@@ -92,4 +106,14 @@ public class RateLimiterBenchmark {
     public String atomicPermission() {
         return atomicGuardedSupplier.get();
     }
+
+    @Benchmark
+    @Threads(value = THREAD_COUNT)
+    @Warmup(iterations = WARMUP_COUNT)
+    @Fork(value = FORK_COUNT)
+    @Measurement(iterations = ITERATION_COUNT)
+    public String refillPermission() {
+        return refillGuardedSupplier.get();
+    }
+
 }

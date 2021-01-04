@@ -37,13 +37,14 @@ public class RateLimiterConfig implements Serializable {
     private final int limitForPeriod;
     private final boolean writableStackTraceEnabled;
 
-    private RateLimiterConfig(Duration timeoutDuration, Duration limitRefreshPeriod,
-        int limitForPeriod, boolean writableStackTraceEnabled) {
+    protected RateLimiterConfig(Duration timeoutDuration, Duration limitRefreshPeriod,
+                              int limitForPeriod, boolean writableStackTraceEnabled) {
         this.timeoutDuration = timeoutDuration;
         this.limitRefreshPeriod = limitRefreshPeriod;
         this.limitForPeriod = limitForPeriod;
         this.writableStackTraceEnabled = writableStackTraceEnabled;
     }
+
 
     /**
      * Returns a builder to create a custom RateLimiterConfig.
@@ -73,11 +74,11 @@ public class RateLimiterConfig implements Serializable {
         return new Builder().build();
     }
 
-    private static Duration checkTimeoutDuration(final Duration timeoutDuration) {
+    protected static Duration checkTimeoutDuration(final Duration timeoutDuration) {
         return requireNonNull(timeoutDuration, TIMEOUT_DURATION_MUST_NOT_BE_NULL);
     }
 
-    private static Duration checkLimitRefreshPeriod(Duration limitRefreshPeriod) {
+    protected static Duration checkLimitRefreshPeriod(Duration limitRefreshPeriod) {
         requireNonNull(limitRefreshPeriod, LIMIT_REFRESH_PERIOD_MUST_NOT_BE_NULL);
         boolean refreshPeriodIsTooShort =
             limitRefreshPeriod.compareTo(ACCEPTABLE_REFRESH_PERIOD) < 0;
@@ -87,7 +88,7 @@ public class RateLimiterConfig implements Serializable {
         return limitRefreshPeriod;
     }
 
-    private static int checkLimitForPeriod(final int limitForPeriod) {
+    protected static int checkLimitForPeriod(final int limitForPeriod) {
         if (limitForPeriod < 1) {
             throw new IllegalArgumentException("LimitForPeriod should be greater than 0");
         }

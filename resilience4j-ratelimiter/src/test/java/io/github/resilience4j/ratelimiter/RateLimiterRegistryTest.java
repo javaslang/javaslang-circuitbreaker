@@ -203,22 +203,6 @@ public class RateLimiterRegistryTest {
         assertThat(rateLimiter.getTags()).containsOnlyElementsOf(expectedTags);
     }
 
-    private static class NoOpRateLimiterEventConsumer implements
-        RegistryEventConsumer<RateLimiter> {
-
-        @Override
-        public void onEntryAddedEvent(EntryAddedEvent<RateLimiter> entryAddedEvent) {
-        }
-
-        @Override
-        public void onEntryRemovedEvent(EntryRemovedEvent<RateLimiter> entryRemoveEvent) {
-        }
-
-        @Override
-        public void onEntryReplacedEvent(EntryReplacedEvent<RateLimiter> entryReplacedEvent) {
-        }
-    }
-
     @Test
     public void testCreateUsingBuilderWithDefaultConfig() {
         RateLimiterRegistry rateLimiterRegistry =

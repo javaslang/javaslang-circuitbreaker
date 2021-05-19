@@ -59,7 +59,7 @@ public class FeignDecorators implements FeignDecorator {
 
     private final List<FeignDecorator> decorators;
 
-    private FeignDecorators(List<FeignDecorator> decorators) {
+    FeignDecorators(List<FeignDecorator> decorators) {
         this.decorators = decorators;
     }
 

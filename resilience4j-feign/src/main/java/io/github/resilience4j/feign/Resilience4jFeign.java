@@ -19,6 +19,12 @@ package io.github.resilience4j.feign;
 import feign.Feign;
 import feign.InvocationHandlerFactory;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 /**
  * Main class for combining feign with Resilience4j.
  *
@@ -37,6 +43,18 @@ public final class Resilience4jFeign {
 
     public static Builder builder(FeignDecorator invocationDecorator) {
         return new Builder(invocationDecorator);
+    }
+
+    @Deprecated
+    public static Feign.Builder builder1(
+        Function<Supplier<Object>, Supplier<CompletionStage<Object>>> completionStageWrapper) {
+        return new PostponedBuilder(completionStageWrapper);
+    }
+
+
+    public static <T> Feign.Builder builder(
+        PostponedDecorators<T> completionStageWrapper) {
+        return new PostponedBuilder<T>(completionStageWrapper);
     }
 
     public static final class Builder extends Feign.Builder {
@@ -61,6 +79,44 @@ public final class Resilience4jFeign {
             super.invocationHandlerFactory(
                 (target, dispatch) -> new DecoratorInvocationHandler(target, dispatch,
                     invocationDecorator));
+            return super.build();
+        }
+
+    }
+
+    public static final class PostponedBuilder<T> extends Feign.Builder {
+
+        private final Function<Supplier<Object>, Supplier<CompletionStage<Object>>> completionStageWrapper;
+        private final List<FeignDecorator> fallbacks;
+
+        @Deprecated
+        public PostponedBuilder(
+            Function<Supplier<Object>, Supplier<CompletionStage<Object>>> completionStageWrapper) {
+            this.completionStageWrapper = completionStageWrapper;
+            this.fallbacks = Collections.emptyList();
+        }
+
+        public PostponedBuilder(
+            PostponedDecorators<T> completionStageWrapper) {
+            this.completionStageWrapper = completionStageWrapper::build;
+            this.fallbacks = completionStageWrapper.getFallbacks();
+        }
+
+        /**
+         * Will throw an {@link UnsupportedOperationException} exception.
+         */
+        @Override
+        public Feign.Builder invocationHandlerFactory(
+            InvocationHandlerFactory invocationHandlerFactory) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Feign build() {
+            FeignDecorators fallback = new FeignDecorators(fallbacks);
+            super.invocationHandlerFactory((target, dispatch) ->
+                new DecoratorPostponedInvocationHandler<>(
+                    target, dispatch, completionStageWrapper, fallback));
             return super.build();
         }
 

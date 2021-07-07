@@ -183,7 +183,7 @@ public class RetryImpl<T> implements Retry {
         public boolean onResult(T result) {
             if (null != resultPredicate && resultPredicate.test(result)) {
                 int currentNumOfAttempts = numOfAttempts.incrementAndGet();
-                if (currentNumOfAttempts >= maxAttempts) {
+                if (currentNumOfAttempts > maxAttempts) {
                     return false;
                 } else {
                     waitIntervalAfterFailure(currentNumOfAttempts, Either.right(result));

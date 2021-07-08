@@ -67,6 +67,8 @@ public class CircuitBreakerConfig implements Serializable {
     @SuppressWarnings("unchecked")
     private Class<? extends Throwable>[] ignoreExceptions = new Class[0];
 
+    @Nullable
+    private String name;
     private float failureRateThreshold = DEFAULT_FAILURE_RATE_THRESHOLD;
     private int permittedNumberOfCallsInHalfOpenState = DEFAULT_PERMITTED_CALLS_IN_HALF_OPEN_STATE;
     private int slidingWindowSize = DEFAULT_SLIDING_WINDOW_SIZE;
@@ -82,7 +84,30 @@ public class CircuitBreakerConfig implements Serializable {
     private Duration maxWaitDurationInHalfOpenState = Duration
         .ofSeconds(DEFAULT_WAIT_DURATION_IN_HALF_OPEN_STATE);
 
-    private CircuitBreakerConfig() {
+    protected CircuitBreakerConfig(Builder builder) {
+        this.name = builder.name;
+        this.waitIntervalFunctionInOpenState = builder.waitIntervalFunctionInOpenState;
+        this.slidingWindowType = builder.slidingWindowType;
+        this.slowCallDurationThreshold = builder.slowCallDurationThreshold;
+        this.maxWaitDurationInHalfOpenState = builder.maxWaitDurationInHalfOpenState;
+        this.slowCallRateThreshold = builder.slowCallRateThreshold;
+        this.failureRateThreshold = builder.failureRateThreshold;
+        this.slidingWindowSize = builder.slidingWindowSize;
+        this.minimumNumberOfCalls = builder.minimumNumberOfCalls;
+        this.permittedNumberOfCallsInHalfOpenState = builder.permittedNumberOfCallsInHalfOpenState;
+        this.recordExceptions = builder.recordExceptions;
+        this.ignoreExceptions = builder.ignoreExceptions;
+        this.automaticTransitionFromOpenToHalfOpenEnabled = builder.automaticTransitionFromOpenToHalfOpenEnabled;
+        this.writableStackTraceEnabled = builder.writableStackTraceEnabled;
+        if(builder.recordExceptionPredicate != null) {
+            this.recordExceptionPredicate = builder.recordExceptionPredicate;
+        }
+        if(builder.ignoreExceptionPredicate != null) {
+            this.ignoreExceptionPredicate = builder.ignoreExceptionPredicate;
+        }
+        this.currentTimestampFunction = builder.currentTimestampFunction;
+        this.timestampUnit = builder.timestampUnit;
+        this.recordResultPredicate = builder.recordResultPredicate;
     }
 
     /**
@@ -111,6 +136,10 @@ public class CircuitBreakerConfig implements Serializable {
      */
     public static CircuitBreakerConfig ofDefaults() {
         return new Builder().build();
+    }
+
+    public String getName() {
+        return name;
     }
 
     public float getFailureRateThreshold() {
@@ -194,6 +223,8 @@ public class CircuitBreakerConfig implements Serializable {
     @Override
     public String toString() {
         StringBuilder circuitBreakerConfig = new StringBuilder("CircuitBreakerConfig {");
+        circuitBreakerConfig.append("name=");
+        circuitBreakerConfig.append(name);
         circuitBreakerConfig.append("recordExceptionPredicate=");
         circuitBreakerConfig.append(recordExceptionPredicate);
         circuitBreakerConfig.append(", ignoreExceptionPredicate=");
@@ -229,6 +260,8 @@ public class CircuitBreakerConfig implements Serializable {
 	public static class Builder {
 
         @Nullable
+        private String name;
+        @Nullable
         private Predicate<Throwable> recordExceptionPredicate;
         @Nullable
         private Predicate<Throwable> ignoreExceptionPredicate;
@@ -261,6 +294,7 @@ public class CircuitBreakerConfig implements Serializable {
 
 
         public Builder(CircuitBreakerConfig baseConfig) {
+            this.name = baseConfig.name;
             this.waitIntervalFunctionInOpenState = baseConfig.waitIntervalFunctionInOpenState;
             this.permittedNumberOfCallsInHalfOpenState = baseConfig.permittedNumberOfCallsInHalfOpenState;
             this.slidingWindowSize = baseConfig.slidingWindowSize;
@@ -283,6 +317,15 @@ public class CircuitBreakerConfig implements Serializable {
 
         public Builder() {
 
+        }
+
+
+        /**
+         * Configures a name for the current configuration.
+         */
+        public Builder name(String name) {
+            this.name = name;
+            return this;
         }
 
         /**
@@ -747,26 +790,10 @@ public class CircuitBreakerConfig implements Serializable {
          * @throws IllegalStateException when the parameter is invalid
          */
         public CircuitBreakerConfig build() {
-            CircuitBreakerConfig config = new CircuitBreakerConfig();
-            config.waitIntervalFunctionInOpenState = validateWaitIntervalFunctionInOpenState();
-            config.slidingWindowType = slidingWindowType;
-            config.slowCallDurationThreshold = slowCallDurationThreshold;
-            config.maxWaitDurationInHalfOpenState = maxWaitDurationInHalfOpenState;
-            config.slowCallRateThreshold = slowCallRateThreshold;
-            config.failureRateThreshold = failureRateThreshold;
-            config.slidingWindowSize = slidingWindowSize;
-            config.minimumNumberOfCalls = minimumNumberOfCalls;
-            config.permittedNumberOfCallsInHalfOpenState = permittedNumberOfCallsInHalfOpenState;
-            config.recordExceptions = recordExceptions;
-            config.ignoreExceptions = ignoreExceptions;
-            config.automaticTransitionFromOpenToHalfOpenEnabled = automaticTransitionFromOpenToHalfOpenEnabled;
-            config.writableStackTraceEnabled = writableStackTraceEnabled;
-            config.recordExceptionPredicate = createRecordExceptionPredicate();
-            config.ignoreExceptionPredicate = createIgnoreFailurePredicate();
-            config.currentTimestampFunction = currentTimestampFunction;
-            config.timestampUnit = timestampUnit;
-            config.recordResultPredicate = recordResultPredicate;
-            return config;
+            this.waitIntervalFunctionInOpenState = validateWaitIntervalFunctionInOpenState();
+            this.recordExceptionPredicate = createRecordExceptionPredicate();
+            this.ignoreExceptionPredicate = createIgnoreFailurePredicate();
+            return new CircuitBreakerConfig(this);
         }
 
         private Predicate<Throwable> createIgnoreFailurePredicate() {

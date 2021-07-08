@@ -41,7 +41,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      * @return a RateLimiterRegistry instance backed by a custom RateLimiter configuration
      */
     static RateLimiterRegistry of(RateLimiterConfig defaultRateLimiterConfig) {
-        return new InMemoryRateLimiterRegistry(defaultRateLimiterConfig);
+        return InMemoryRateLimiterRegistry.create(defaultRateLimiterConfig);
     }
 
     /**
@@ -55,7 +55,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      */
     static RateLimiterRegistry of(RateLimiterConfig defaultRateLimiterConfig,
         RegistryEventConsumer<RateLimiter> registryEventConsumer) {
-        return new InMemoryRateLimiterRegistry(defaultRateLimiterConfig, registryEventConsumer);
+        return InMemoryRateLimiterRegistry.create(defaultRateLimiterConfig, registryEventConsumer);
     }
 
     /**
@@ -69,7 +69,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      */
     static RateLimiterRegistry of(RateLimiterConfig defaultRateLimiterConfig,
         List<RegistryEventConsumer<RateLimiter>> registryEventConsumers) {
-        return new InMemoryRateLimiterRegistry(defaultRateLimiterConfig, registryEventConsumers);
+        return InMemoryRateLimiterRegistry.create(defaultRateLimiterConfig, registryEventConsumers);
     }
 
     /**
@@ -79,7 +79,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      * @return The {@link RateLimiterConfig}
      */
     static RateLimiterRegistry ofDefaults() {
-        return new InMemoryRateLimiterRegistry(RateLimiterConfig.ofDefaults());
+        return InMemoryRateLimiterRegistry.create(RateLimiterConfig.ofDefaults());
     }
 
     /**
@@ -89,7 +89,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      * @return a ThreadPoolBulkheadRegistry with a Map of shared RateLimiter configurations.
      */
     static RateLimiterRegistry of(Map<String, RateLimiterConfig> configs) {
-        return new InMemoryRateLimiterRegistry(configs);
+        return InMemoryRateLimiterRegistry.create(configs);
     }
 
     /**
@@ -103,7 +103,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      */
     static RateLimiterRegistry of(Map<String, RateLimiterConfig> configs,
         io.vavr.collection.Map<String, String> tags) {
-        return new InMemoryRateLimiterRegistry(configs, tags);
+        return InMemoryRateLimiterRegistry.create(configs, tags);
     }
 
     /**
@@ -117,7 +117,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      */
     static RateLimiterRegistry of(Map<String, RateLimiterConfig> configs,
         RegistryEventConsumer<RateLimiter> registryEventConsumer) {
-        return new InMemoryRateLimiterRegistry(configs, registryEventConsumer);
+        return InMemoryRateLimiterRegistry.create(configs, registryEventConsumer);
     }
 
     /**
@@ -133,7 +133,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
     static RateLimiterRegistry of(Map<String, RateLimiterConfig> configs,
         RegistryEventConsumer<RateLimiter> registryEventConsumer,
         io.vavr.collection.Map<String, String> tags) {
-        return new InMemoryRateLimiterRegistry(configs, registryEventConsumer, tags);
+        return InMemoryRateLimiterRegistry.create(configs, registryEventConsumer, tags);
     }
 
     /**
@@ -147,7 +147,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
      */
     static RateLimiterRegistry of(Map<String, RateLimiterConfig> configs,
         List<RegistryEventConsumer<RateLimiter>> registryEventConsumers) {
-        return new InMemoryRateLimiterRegistry(configs, registryEventConsumers);
+        return InMemoryRateLimiterRegistry.create(configs, registryEventConsumers);
     }
 
     /**
@@ -338,7 +338,7 @@ public interface RateLimiterRegistry extends Registry<RateLimiter, RateLimiterCo
          * @return the RateLimiterRegistry
          */
         public RateLimiterRegistry build() {
-            return new InMemoryRateLimiterRegistry(rateLimiterConfigsMap, registryEventConsumers, tags,
+            return InMemoryRateLimiterRegistry.create(rateLimiterConfigsMap, registryEventConsumers, tags,
                 registryStore);
         }
     }

@@ -20,7 +20,6 @@ package io.github.resilience4j.ratelimiter.internal;
 
 import io.github.resilience4j.core.ConfigurationNotFoundException;
 import io.github.resilience4j.core.RegistryStore;
-import io.github.resilience4j.core.registry.AbstractRegistry;
 import io.github.resilience4j.core.registry.InMemoryRegistryStore;
 import io.github.resilience4j.core.registry.RegistryEventConsumer;
 import io.github.resilience4j.ratelimiter.RateLimiter;
@@ -30,108 +29,141 @@ import io.vavr.collection.Array;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.Seq;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
+
+import static io.github.resilience4j.ratelimiter.internal.ConfigConverter.defaultConverter;
+import static io.github.resilience4j.ratelimiter.internal.InMemoryFactory.atomicFactory;
 
 /**
  * Backend RateLimiter manager. Constructs backend RateLimiters according to configuration values.
  */
-public class InMemoryRateLimiterRegistry extends
-    AbstractRegistry<RateLimiter, RateLimiterConfig> implements RateLimiterRegistry {
+public class InMemoryRateLimiterRegistry<E extends RateLimiterConfig> implements RateLimiterRegistry {
 
+    private final InMemoryRegistry<RateLimiter,E> registry;
+    private final ConfigConverter<E> configConverter;
+    private final InMemoryFactory<E> inMemoryFactory;
+
+    private static final String DEFAULT_CONFIG = "default";
+
+    private static final String CONSUMER_MUST_NOT_BE_NULL = "EventConsumers must not be null";
     /**
      * The constructor with default default.
      */
-    public InMemoryRateLimiterRegistry() {
-        this(RateLimiterConfig.ofDefaults());
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create() {
+        return create(RateLimiterConfig.ofDefaults());
     }
 
-    public InMemoryRateLimiterRegistry(io.vavr.collection.Map<String, String> tags) {
-        this(RateLimiterConfig.ofDefaults(), tags);
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(io.vavr.collection.Map<String, String> tags) {
+        return create(RateLimiterConfig.ofDefaults(), tags);
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs) {
-        this(configs, HashMap.empty());
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs) {
+        return create(configs, HashMap.empty());
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
         io.vavr.collection.Map<String, String> tags) {
-        this(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()), tags);
-        this.configurations.putAll(configs);
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()), tags);
+        registry.putAllConfigurations(configs);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
         RegistryEventConsumer<RateLimiter> registryEventConsumer) {
-        this(configs, registryEventConsumer, HashMap.empty());
+        return create(configs, registryEventConsumer, HashMap.empty());
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
         RegistryEventConsumer<RateLimiter> registryEventConsumer,
         io.vavr.collection.Map<String, String> tags) {
-        this(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()),
-            registryEventConsumer, tags);
-        this.configurations.putAll(configs);
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()), registryEventConsumer,tags);
+        registry.putAllConfigurations(configs);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
         List<RegistryEventConsumer<RateLimiter>> registryEventConsumers) {
-        this(configs, registryEventConsumers, HashMap.empty());
+        return create(configs, registryEventConsumers, HashMap.empty());
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
         List<RegistryEventConsumer<RateLimiter>> registryEventConsumers,
         io.vavr.collection.Map<String, String> tags) {
-        this(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()),
-            registryEventConsumers, tags);
-        this.configurations.putAll(configs);
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()), registryEventConsumers,tags);
+        registry.putAllConfigurations(configs);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
     }
 
     /**
-     * The constructor with custom default config.
+     * Factory method with custom default config.
      *
      * @param defaultConfig The default config.
      */
-    public InMemoryRateLimiterRegistry(RateLimiterConfig defaultConfig) {
-        super(defaultConfig);
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(RateLimiterConfig defaultConfig) {
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(defaultConfig);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
     }
 
-    public InMemoryRateLimiterRegistry(RateLimiterConfig defaultConfig,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(RateLimiterConfig defaultConfig,
         io.vavr.collection.Map<String, String> tags) {
-        super(defaultConfig, tags);
+        return create(defaultConfig, new ArrayList<>(),tags);
     }
 
-    public InMemoryRateLimiterRegistry(RateLimiterConfig defaultConfig,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(RateLimiterConfig defaultConfig,
         RegistryEventConsumer<RateLimiter> registryEventConsumer) {
-        super(defaultConfig, registryEventConsumer);
+        List<RegistryEventConsumer<RateLimiter>> registryEventConsumers = Collections.singletonList(
+            Objects.requireNonNull(registryEventConsumer, CONSUMER_MUST_NOT_BE_NULL));
+        return create(defaultConfig, registryEventConsumers);
     }
 
-    public InMemoryRateLimiterRegistry(RateLimiterConfig defaultConfig,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(RateLimiterConfig defaultConfig,
         RegistryEventConsumer<RateLimiter> registryEventConsumer,
         io.vavr.collection.Map<String, String> tags) {
-        super(defaultConfig, registryEventConsumer, tags);
+        List<RegistryEventConsumer<RateLimiter>> registryEventConsumers = Collections.singletonList(
+                    Objects.requireNonNull(registryEventConsumer, CONSUMER_MUST_NOT_BE_NULL));
+        return create(defaultConfig, registryEventConsumers, tags);
     }
 
-    public InMemoryRateLimiterRegistry(RateLimiterConfig defaultConfig,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(RateLimiterConfig defaultConfig,
         List<RegistryEventConsumer<RateLimiter>> registryEventConsumers) {
-        super(defaultConfig, registryEventConsumers);
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(defaultConfig, registryEventConsumers);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
     }
 
-    public InMemoryRateLimiterRegistry(RateLimiterConfig defaultConfig,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(RateLimiterConfig defaultConfig,
         List<RegistryEventConsumer<RateLimiter>> registryEventConsumers,
         io.vavr.collection.Map<String, String> tags) {
-        super(defaultConfig, registryEventConsumers, tags);
+        Map<String, RateLimiterConfig> configs = new java.util.HashMap<>();
+        configs.put(DEFAULT_CONFIG, defaultConfig);
+        return create(configs, registryEventConsumers, tags, null);
     }
 
-    public InMemoryRateLimiterRegistry(Map<String, RateLimiterConfig> configs,
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
+                                                                        List<RegistryEventConsumer<RateLimiter>> registryEventConsumers,
+                                                                        Map<String, String> tags, RegistryStore<RateLimiter> registryStore) {
+        io.vavr.collection.Map<String, String> varvTags = io.vavr.collection.HashMap.ofAll(tags);
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()),
+            registryEventConsumers, Optional.ofNullable(varvTags).orElse(HashMap.empty()),
+            Optional.ofNullable(registryStore).orElse(new InMemoryRegistryStore<>()));
+        registry.putAllConfigurations(configs);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
+    }
+
+    public static InMemoryRateLimiterRegistry<RateLimiterConfig> create(Map<String, RateLimiterConfig> configs,
                                           List<RegistryEventConsumer<RateLimiter>> registryEventConsumers,
                                           io.vavr.collection.Map<String, String> tags, RegistryStore<RateLimiter> registryStore) {
-        super(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()),
+        InMemoryRegistry<RateLimiter, RateLimiterConfig> registry = new InMemoryRegistry<>(configs.getOrDefault(DEFAULT_CONFIG, RateLimiterConfig.ofDefaults()),
             registryEventConsumers, Optional.ofNullable(tags).orElse(HashMap.empty()),
             Optional.ofNullable(registryStore).orElse(new InMemoryRegistryStore<>()));
-        this.configurations.putAll(configs);
+        registry.putAllConfigurations(configs);
+        return new InMemoryRateLimiterRegistry<>(registry, defaultConverter(), atomicFactory());
+    }
+
+    private InMemoryRateLimiterRegistry(InMemoryRegistry<RateLimiter, E> registry, ConfigConverter<E> configConverter, InMemoryFactory<E> inMemoryFactory) {
+        this.registry = registry;
+        this.configConverter = configConverter;
+        this.inMemoryFactory = inMemoryFactory;
     }
 
     /**
@@ -139,7 +171,7 @@ public class InMemoryRateLimiterRegistry extends
      */
     @Override
     public Seq<RateLimiter> getAllRateLimiters() {
-        return Array.ofAll(entryMap.values());
+        return Array.ofAll(registry.allRateLimiters());
     }
 
     /**
@@ -172,8 +204,8 @@ public class InMemoryRateLimiterRegistry extends
     @Override
     public RateLimiter rateLimiter(String name, RateLimiterConfig config,
         io.vavr.collection.Map<String, String> tags) {
-        return computeIfAbsent(name, () -> new AtomicRateLimiter(name,
-            Objects.requireNonNull(config, CONFIG_MUST_NOT_BE_NULL), getAllTags(tags)));
+        E nonNullConfig = configConverter.from(registry.configMustNotBeNull(config));
+        return registry.computeIfAbsentFacade(name, () -> inMemoryFactory.create(name, nonNullConfig, registry.allTags(tags)));
     }
 
     /**
@@ -192,9 +224,7 @@ public class InMemoryRateLimiterRegistry extends
     public RateLimiter rateLimiter(String name,
         Supplier<RateLimiterConfig> rateLimiterConfigSupplier,
         io.vavr.collection.Map<String, String> tags) {
-        return computeIfAbsent(name, () -> new AtomicRateLimiter(name, Objects.requireNonNull(
-            Objects.requireNonNull(rateLimiterConfigSupplier, SUPPLIER_MUST_NOT_BE_NULL).get(),
-            CONFIG_MUST_NOT_BE_NULL), getAllTags(tags)));
+        return registry.computeIfAbsentFacade(name, () -> inMemoryFactory.create(name, configConverter.from(registry.configMustNotBeNull(registry.supplierMustNotBetNull(rateLimiterConfigSupplier).get())), registry.allTags(tags)));
     }
 
     /**
@@ -211,7 +241,53 @@ public class InMemoryRateLimiterRegistry extends
     @Override
     public RateLimiter rateLimiter(String name, String configName,
         io.vavr.collection.Map<String, String> tags) {
-        return computeIfAbsent(name, () -> RateLimiter.of(name, getConfiguration(configName)
-            .orElseThrow(() -> new ConfigurationNotFoundException(configName)), getAllTags(tags)));
+        return registry.computeIfAbsentFacade(name, () -> inMemoryFactory.create(name,registry.getConfiguration(configName).orElseThrow(() -> new ConfigurationNotFoundException(configName)) , registry.allTags(tags)));
     }
+
+    @Override
+    public void addConfiguration(String configName, RateLimiterConfig configuration) {
+        registry.addConfiguration(configName, configConverter.from(configuration));
+    }
+
+    @Override
+    public Optional<RateLimiter> find(String name) {
+        return registry.find(name);
+    }
+
+    @Override
+    public Optional<RateLimiter> remove(String name) {
+        return registry.remove(name);
+    }
+
+    /**
+     * Replacing a rate Limiter should be considered stateless!!!!
+     * @param name     the existing name
+     * @param newEntry a new entry
+     * @return
+     */
+    @Override
+    public Optional<RateLimiter> replace(String name, RateLimiter newEntry) {
+        return registry.replace(name, newEntry);
+    }
+
+    @Override
+    public Optional<RateLimiterConfig> getConfiguration(String configName) {
+        return registry.getConfiguration(configName).map(r -> r);
+    }
+
+    @Override
+    public RateLimiterConfig getDefaultConfig() {
+        return registry.getDefaultConfig();
+    }
+
+    @Override
+    public io.vavr.collection.Map<String, String> getTags() {
+        return registry.getTags();
+    }
+
+    @Override
+    public EventPublisher<RateLimiter> getEventPublisher() {
+        return registry.getEventPublisher();
+    }
+
 }

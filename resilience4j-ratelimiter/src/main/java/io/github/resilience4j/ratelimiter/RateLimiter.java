@@ -24,6 +24,7 @@ import io.github.resilience4j.ratelimiter.event.RateLimiterEvent;
 import io.github.resilience4j.ratelimiter.event.RateLimiterOnFailureEvent;
 import io.github.resilience4j.ratelimiter.event.RateLimiterOnSuccessEvent;
 import io.github.resilience4j.ratelimiter.internal.AtomicRateLimiter;
+import io.github.resilience4j.ratelimiter.internal.RefillRateLimiter;
 import io.vavr.CheckedFunction0;
 import io.vavr.CheckedFunction1;
 import io.vavr.CheckedRunnable;
@@ -70,6 +71,11 @@ public interface RateLimiter {
     static RateLimiter of(String name, RateLimiterConfig rateLimiterConfig,
         Map<String, String> tags) {
         return new AtomicRateLimiter(name, rateLimiterConfig, tags);
+    }
+
+    static RateLimiter of(String name, RefillRateLimiterConfig rateLimiterConfig,
+                          Map<String, String> tags) {
+        return new RefillRateLimiter(name, rateLimiterConfig, tags);
     }
 
     /**

@@ -28,4 +28,4 @@ include 'resilience4j-bom'
 include 'resilience4j-framework-common'
 include 'resilience4j-kotlin'
 include 'resilience4j-micronaut'
-
+include 'resilience4j-grpc'

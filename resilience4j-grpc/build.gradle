@@ -1,0 +1,10 @@
+dependencies {
+    compileOnly(libraries.grpc_stub)
+    implementation project(':resilience4j-circuitbreaker')
+    implementation project(':resilience4j-ratelimiter')
+
+    testImplementation(libraries.grpc_api)
+    testImplementation(libraries.grpc_testing)
+    testImplementation(libraries.grpc_testing_proto)
+}
+ext.moduleName = 'io.github.resilience4j.grpc'

@@ -35,6 +35,7 @@ ext {
     micronautVersion = '2.1.0'
     micronautTestVersion = '2.1.0'
     groovyVersion = '2.5.6'
+    grpcVersion = '1.35.0'
 
     libraries = [
             // compile
@@ -140,7 +141,13 @@ ext {
             // Spring cloud addon
             spring_cloud_openfeign_core: "org.springframework.cloud:spring-cloud-openfeign-core:${springBootOpenFeignVersion}",
             spring_cloud_starter_openfeign: "org.springframework.cloud:spring-cloud-starter-openfeign:${springBootOpenFeignVersion}",
-            spring_cloud_context: "org.springframework.cloud:spring-cloud-context:${springCloudContext2Version}"
+            spring_cloud_context: "org.springframework.cloud:spring-cloud-context:${springCloudContext2Version}",
+
+            // gRPC addon
+            grpc_api: "io.grpc:grpc-api:$grpcVersion",
+            grpc_stub: "io.grpc:grpc-stub:$grpcVersion",
+            grpc_testing: "io.grpc:grpc-testing:$grpcVersion",
+            grpc_testing_proto: "io.grpc:grpc-testing-proto:$grpcVersion"
     ]
 
 }

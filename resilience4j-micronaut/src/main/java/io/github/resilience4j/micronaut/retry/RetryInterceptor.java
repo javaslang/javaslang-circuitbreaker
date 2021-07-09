@@ -17,6 +17,7 @@ package io.github.resilience4j.micronaut.retry;
 
 import io.github.resilience4j.micronaut.BaseInterceptor;
 import io.github.resilience4j.micronaut.ResilienceInterceptPhase;
+import io.github.resilience4j.micronaut.util.PublisherExtension;
 import io.github.resilience4j.retry.Retry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.github.resilience4j.retry.transformer.RetryTransformer;
@@ -45,15 +46,17 @@ public class RetryInterceptor extends BaseInterceptor implements MethodIntercept
     private final RetryRegistry retryRegistry;
     private final ExecutionHandleLocator executionHandleLocator;
     private final ScheduledExecutorService executorService;
-
+    private final PublisherExtension extension;
 
     public RetryInterceptor(
         ExecutionHandleLocator executionHandleLocator,
         RetryRegistry retryRegistry,
-        @Named(TaskExecutors.SCHEDULED) ExecutorService executorService) {
+        @Named(TaskExecutors.SCHEDULED) ExecutorService executorService,
+        PublisherExtension extension) {
         this.retryRegistry = retryRegistry;
         this.executionHandleLocator = executionHandleLocator;
         this.executorService = (ScheduledExecutorService) executorService;
+        this.extension = extension;
     }
 
 
@@ -91,9 +94,11 @@ public class RetryInterceptor extends BaseInterceptor implements MethodIntercept
         try {
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER:
-                    return interceptedMethod.handleResult(fallbackReactiveTypes(
-                        Flowable.fromPublisher(interceptedMethod.interceptResultAsPublisher()).compose(RetryTransformer.of(retry)),
-                        context));
+                    return interceptedMethod.handleResult(
+                        extension.fallbackPublisher(
+                            extension.retry(interceptedMethod.interceptResultAsPublisher(), retry),
+                            context,
+                            this::findFallbackMethod));
                 case COMPLETION_STAGE:
                     return interceptedMethod.handleResult(
                         fallbackForFuture(

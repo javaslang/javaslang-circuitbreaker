@@ -17,19 +17,17 @@ package io.github.resilience4j.micronaut.ratelimiter;
 
 import io.github.resilience4j.micronaut.BaseInterceptor;
 import io.github.resilience4j.micronaut.ResilienceInterceptPhase;
+import io.github.resilience4j.micronaut.util.PublisherExtension;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
-import io.github.resilience4j.ratelimiter.operator.RateLimiterOperator;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.context.BeanContext;
 import io.micronaut.context.ExecutionHandleLocator;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.MethodExecutionHandle;
-import io.reactivex.Flowable;
 
 import javax.inject.Singleton;
 import java.util.Optional;
@@ -40,11 +38,12 @@ import java.util.concurrent.CompletionException;
 public class RateLimiterInterceptor extends BaseInterceptor implements MethodInterceptor<Object, Object> {
     private final RateLimiterRegistry rateLimiterRegistry;
     private final ExecutionHandleLocator executionHandleLocator;
+    private final PublisherExtension extension;
 
-
-    public RateLimiterInterceptor(ExecutionHandleLocator executionHandleLocator, RateLimiterRegistry rateLimiterRegistry) {
+    public RateLimiterInterceptor(ExecutionHandleLocator executionHandleLocator, RateLimiterRegistry rateLimiterRegistry, PublisherExtension extension) {
         this.rateLimiterRegistry = rateLimiterRegistry;
         this.executionHandleLocator = executionHandleLocator;
+        this.extension = extension;
     }
 
     @Override
@@ -80,9 +79,11 @@ public class RateLimiterInterceptor extends BaseInterceptor implements MethodInt
         try {
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER:
-                    return interceptedMethod.handleResult(fallbackReactiveTypes(
-                        Flowable.fromPublisher(interceptedMethod.interceptResultAsPublisher()).compose(RateLimiterOperator.of(rateLimiter)),
-                        context));
+                    return interceptedMethod.handleResult(
+                        extension.fallbackPublisher(
+                            extension.rateLimiter(interceptedMethod.interceptResultAsPublisher(), rateLimiter),
+                            context,
+                            this::findFallbackMethod));
                 case COMPLETION_STAGE:
                     return interceptedMethod.handleResult(
                         fallbackForFuture(

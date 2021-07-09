@@ -17,19 +17,17 @@ package io.github.resilience4j.micronaut.circuitbreaker;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
-import io.github.resilience4j.circuitbreaker.operator.CircuitBreakerOperator;
 import io.github.resilience4j.micronaut.BaseInterceptor;
 import io.github.resilience4j.micronaut.ResilienceInterceptPhase;
+import io.github.resilience4j.micronaut.util.PublisherExtension;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.context.BeanContext;
 import io.micronaut.context.ExecutionHandleLocator;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.MethodExecutionHandle;
-import io.reactivex.Flowable;
 
 import javax.inject.Singleton;
 import java.util.Optional;
@@ -40,11 +38,12 @@ import java.util.concurrent.CompletionException;
 public class CircuitBreakerInterceptor extends BaseInterceptor implements MethodInterceptor<Object,Object> {
     private final CircuitBreakerRegistry circuitBreakerRegistry;
     private final ExecutionHandleLocator executionHandleLocator;
+    private final PublisherExtension extension;
 
-
-    public CircuitBreakerInterceptor(ExecutionHandleLocator executionHandleLocator, CircuitBreakerRegistry circuitBreakerRegistry) {
+    public CircuitBreakerInterceptor(ExecutionHandleLocator executionHandleLocator, CircuitBreakerRegistry circuitBreakerRegistry, PublisherExtension extension) {
         this.circuitBreakerRegistry = circuitBreakerRegistry;
         this.executionHandleLocator = executionHandleLocator;
+        this.extension = extension;
     }
 
     @Override
@@ -80,9 +79,11 @@ public class CircuitBreakerInterceptor extends BaseInterceptor implements Method
         try {
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER:
-                    return interceptedMethod.handleResult(fallbackReactiveTypes(
-                        Flowable.fromPublisher(interceptedMethod.interceptResultAsPublisher()).compose(CircuitBreakerOperator.of(circuitBreaker)),
-                        context));
+                    return interceptedMethod.handleResult(
+                        extension.fallbackPublisher(
+                            extension.circuitBreaker(interceptedMethod.interceptResultAsPublisher(), circuitBreaker),
+                            context,
+                            this::findFallbackMethod));
                 case COMPLETION_STAGE:
                     return interceptedMethod.handleResult(
                         fallbackForFuture(

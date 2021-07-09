@@ -16,11 +16,18 @@ dependencies {
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-router"
 
+
+    compileOnly(libraries.rxjava2)
+    compileOnly(libraries.rxjava3)
+    compileOnly(libraries.reactor)
+    compileOnly project(':resilience4j-reactor')
+    compileOnly project(':resilience4j-rxjava2')
+    compileOnly project(':resilience4j-rxjava3')
+
     compileOnly project(':resilience4j-circuitbreaker')
     compileOnly project(':resilience4j-ratelimiter')
     compileOnly project(':resilience4j-timelimiter')
     compileOnly project(':resilience4j-retry')
-    compileOnly project(':resilience4j-rxjava2')
     compileOnly project(':resilience4j-bulkhead')
     compileOnly project(':resilience4j-consumer')
     compileOnly project(':resilience4j-core')
@@ -31,8 +38,8 @@ dependencies {
     testImplementation project(':resilience4j-timelimiter')
     testImplementation project(':resilience4j-bulkhead')
     testImplementation project(':resilience4j-retry')
-    testImplementation project(':resilience4j-rxjava2')
     testImplementation project(':resilience4j-consumer')
+    testImplementation project(':resilience4j-rxjava2')
     testImplementation "io.micronaut:micronaut-aop"
 
     testImplementation "io.micronaut:micronaut-http-client"

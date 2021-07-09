@@ -20,6 +20,7 @@ import io.github.resilience4j.bulkhead.*;
 import io.github.resilience4j.bulkhead.operator.BulkheadOperator;
 import io.github.resilience4j.micronaut.BaseInterceptor;
 import io.github.resilience4j.micronaut.ResilienceInterceptPhase;
+import io.github.resilience4j.micronaut.util.PublisherExtension;
 import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
@@ -49,6 +50,7 @@ public class BulkheadInterceptor extends BaseInterceptor implements MethodInterc
     private final BulkheadRegistry bulkheadRegistry;
     private final ThreadPoolBulkheadRegistry threadPoolBulkheadRegistry;
     private final ExecutionHandleLocator executionHandleLocator;
+    private final PublisherExtension extension;
 
     /**
      * @param executionHandleLocator                The bean context to allow for DI of class annotated with {@link javax.inject.Inject}.
@@ -56,10 +58,11 @@ public class BulkheadInterceptor extends BaseInterceptor implements MethodInterc
      * @param threadPoolBulkheadRegistry thread pool bulkhead registry used to retrieve {@link Bulkhead} by name
      */
     public BulkheadInterceptor(BeanContext executionHandleLocator,
-                               BulkheadRegistry bulkheadRegistry, ThreadPoolBulkheadRegistry threadPoolBulkheadRegistry) {
+                               BulkheadRegistry bulkheadRegistry, ThreadPoolBulkheadRegistry threadPoolBulkheadRegistry, PublisherExtension extension) {
         this.bulkheadRegistry = bulkheadRegistry;
         this.executionHandleLocator = executionHandleLocator;
         this.threadPoolBulkheadRegistry = threadPoolBulkheadRegistry;
+        this.extension = extension;
     }
 
     @Override
@@ -101,9 +104,12 @@ public class BulkheadInterceptor extends BaseInterceptor implements MethodInterc
             try {
                 switch (interceptedMethod.resultType()) {
                     case PUBLISHER:
-                        return interceptedMethod.handleResult(fallbackReactiveTypes(
-                            Flowable.fromPublisher(interceptedMethod.interceptResultAsPublisher()).compose(BulkheadOperator.of(bulkhead)),
-                            context));
+                        return interceptedMethod.handleResult(
+                            extension.fallbackPublisher(
+                                extension.bulkhead(interceptedMethod.interceptResultAsPublisher(), bulkhead),
+                                context,
+                                this::findFallbackMethod));
+
                     case COMPLETION_STAGE:
                         return interceptedMethod.handleResult(
                             fallbackForFuture(

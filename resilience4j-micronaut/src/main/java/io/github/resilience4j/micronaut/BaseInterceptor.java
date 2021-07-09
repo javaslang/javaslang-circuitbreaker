@@ -16,12 +16,9 @@
 package io.github.resilience4j.micronaut;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.discovery.exceptions.NoAvailableServiceException;
 import io.micronaut.inject.MethodExecutionHandle;
 import io.micronaut.retry.exception.FallbackException;
-import io.reactivex.Flowable;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,30 +104,5 @@ public abstract class BaseInterceptor {
             }
         });
         return newFuture;
-    }
-
-    public <T> Publisher<T> fallbackReactiveTypes(Publisher<T> flowable, MethodInvocationContext<Object, Object> context) {
-        return Flowable.fromPublisher(flowable).onErrorResumeNext(throwable -> {
-            Optional<? extends MethodExecutionHandle<?, Object>> fallbackMethod = findFallbackMethod(context);
-            if (fallbackMethod.isPresent()) {
-                MethodExecutionHandle<?, Object> fallbackHandle = fallbackMethod.get();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Type [{}] resolved fallback: {}", context.getTarget().getClass(), fallbackHandle);
-                }
-                Object fallbackResult;
-                try {
-                    fallbackResult = fallbackHandle.invoke(context.getParameterValues());
-                } catch (Exception e) {
-                    return Flowable.error(throwable);
-                }
-                if (fallbackResult == null) {
-                    return Flowable.error(new FallbackException("Fallback handler [" + fallbackHandle + "] returned null value"));
-                } else {
-                    return ConversionService.SHARED.convert(fallbackResult, Publisher.class)
-                        .orElseThrow(() -> new FallbackException("Unsupported Reactive type: " + fallbackResult));
-                }
-            }
-            return Flowable.error(throwable);
-        });
     }
 }

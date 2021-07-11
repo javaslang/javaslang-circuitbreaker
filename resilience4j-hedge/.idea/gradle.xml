@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="delegatedBuild" value="false" />
+        <option name="testRunner" value="PLATFORM" />
+        <option name="distributionType" value="LOCAL" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="$PROJECT_DIR$/../../../../../ProgramData/chocolatey/lib/gradle/tools/gradle-7.0.2" />
+        <option name="gradleJvm" value="#JAVA_HOME" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/.." />
+            <option value="$PROJECT_DIR$/../resilience4j-all" />
+            <option value="$PROJECT_DIR$/../resilience4j-annotations" />
+            <option value="$PROJECT_DIR$/../resilience4j-bom" />
+            <option value="$PROJECT_DIR$/../resilience4j-bulkhead" />
+            <option value="$PROJECT_DIR$/../resilience4j-cache" />
+            <option value="$PROJECT_DIR$/../resilience4j-circuitbreaker" />
+            <option value="$PROJECT_DIR$/../resilience4j-circularbuffer" />
+            <option value="$PROJECT_DIR$/../resilience4j-consumer" />
+            <option value="$PROJECT_DIR$/../resilience4j-core" />
+            <option value="$PROJECT_DIR$/../resilience4j-feign" />
+            <option value="$PROJECT_DIR$/../resilience4j-framework-common" />
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/../resilience4j-kotlin" />
+            <option value="$PROJECT_DIR$/../resilience4j-metrics" />
+            <option value="$PROJECT_DIR$/../resilience4j-micrometer" />
+            <option value="$PROJECT_DIR$/../resilience4j-micronaut" />
+            <option value="$PROJECT_DIR$/../resilience4j-prometheus" />
+            <option value="$PROJECT_DIR$/../resilience4j-ratelimiter" />
+            <option value="$PROJECT_DIR$/../resilience4j-ratpack" />
+            <option value="$PROJECT_DIR$/../resilience4j-reactor" />
+            <option value="$PROJECT_DIR$/../resilience4j-retrofit" />
+            <option value="$PROJECT_DIR$/../resilience4j-retry" />
+            <option value="$PROJECT_DIR$/../resilience4j-rxjava2" />
+            <option value="$PROJECT_DIR$/../resilience4j-rxjava3" />
+            <option value="$PROJECT_DIR$/../resilience4j-spring" />
+            <option value="$PROJECT_DIR$/../resilience4j-spring-boot2" />
+            <option value="$PROJECT_DIR$/../resilience4j-spring-cloud2" />
+            <option value="$PROJECT_DIR$/../resilience4j-test" />
+            <option value="$PROJECT_DIR$/../resilience4j-timelimiter" />
+            <option value="$PROJECT_DIR$/../resilience4j-vertx" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>

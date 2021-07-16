@@ -325,5 +325,10 @@ public class FixedThreadPoolBulkhead implements ThreadPoolBulkhead {
         public int getQueueCapacity() {
             return config.getQueueCapacity();
         }
+
+        @Override
+        public int getActiveThreadCount() {
+            return executorService.getActiveCount();
+        }
     }
 }

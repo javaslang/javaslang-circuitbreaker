@@ -34,6 +34,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TaggedThreadPoolBulkheadMetricsTest {
 
+    private static final List<String> EXPECTED_METERS = Arrays.asList(
+        "custom.max.thread.pool.size",
+        "custom.core.thread.pool.size",
+        "resilience4j.bulkhead.queue.depth",
+        "resilience4j.bulkhead.queue.capacity",
+        "resilience4j.bulkhead.thread.pool.size",
+        "resilience4j.bulkhead.active.thread.count"
+    );
+    private static final int EXPECTED_METER_COUNT = EXPECTED_METERS.size();
     private MeterRegistry meterRegistry;
     private ThreadPoolBulkhead bulkhead;
     private ThreadPoolBulkheadRegistry bulkheadRegistry;
@@ -59,11 +68,11 @@ public class TaggedThreadPoolBulkheadMetricsTest {
         ThreadPoolBulkhead newBulkhead = bulkheadRegistry.bulkhead("backendB");
 
         assertThat(taggedBulkheadMetrics.meterIdMap).containsKeys("backendA", "backendB");
-        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendA")).hasSize(5);
-        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendB")).hasSize(5);
+        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendA")).hasSize(EXPECTED_METER_COUNT);
+        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendB")).hasSize(EXPECTED_METER_COUNT);
 
         List<Meter> meters = meterRegistry.getMeters();
-        assertThat(meters).hasSize(10);
+        assertThat(meters).hasSize(EXPECTED_METER_COUNT * 2);
 
         Collection<Gauge> gauges = meterRegistry.get(DEFAULT_MAX_THREAD_POOL_SIZE_METRIC_NAME)
             .gauges();
@@ -78,10 +87,10 @@ public class TaggedThreadPoolBulkheadMetricsTest {
     public void shouldAddCustomTags() {
         bulkheadRegistry.bulkhead("backendF", io.vavr.collection.HashMap.of("key1", "value1"));
         assertThat(taggedBulkheadMetrics.meterIdMap).containsKeys("backendA", "backendF");
-        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendA")).hasSize(5);
-        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendF")).hasSize(5);
+        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendA")).hasSize(EXPECTED_METER_COUNT);
+        assertThat(taggedBulkheadMetrics.meterIdMap.get("backendF")).hasSize(EXPECTED_METER_COUNT);
         List<Meter> meters = meterRegistry.getMeters();
-        assertThat(meters).hasSize(10);
+        assertThat(meters).hasSize(EXPECTED_METER_COUNT * 2);
         assertThat(meterRegistry.get(DEFAULT_MAX_THREAD_POOL_SIZE_METRIC_NAME).tag("key1", "value1")).isNotNull();
 
     }
@@ -89,7 +98,7 @@ public class TaggedThreadPoolBulkheadMetricsTest {
     @Test
     public void shouldRemovedMetricsForRemovedRetry() {
         List<Meter> meters = meterRegistry.getMeters();
-        assertThat(meters).hasSize(5);
+        assertThat(meters).hasSize(EXPECTED_METER_COUNT);
 
         assertThat(taggedBulkheadMetrics.meterIdMap).containsKeys("backendA");
         bulkheadRegistry.remove("backendA");
@@ -189,12 +198,6 @@ public class TaggedThreadPoolBulkheadMetricsTest {
             .map(Meter.Id::getName)
             .collect(Collectors.toSet());
 
-        assertThat(metricNames).hasSameElementsAs(Arrays.asList(
-            "custom.max.thread.pool.size",
-            "custom.core.thread.pool.size",
-            "resilience4j.bulkhead.queue.depth",
-            "resilience4j.bulkhead.queue.capacity",
-            "resilience4j.bulkhead.thread.pool.size"
-        ));
+        assertThat(metricNames).hasSameElementsAs(EXPECTED_METERS);
     }
 }
